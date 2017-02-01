@@ -1,0 +1,13 @@
+access EC2
+
+
+
+chmod 400 SeniorServer.pem
+
+
+
+Server: ssh -i "SeniorServer.pem" ec2-user@ec2-54-149-240-156.us-west-2.compute.amazonaws.com
+
+
+
+Control: ssh -i "SeniorServer.pem" ec2-user@ec2-54-200-255-44.us-west-2.compute.amazonaws.com
