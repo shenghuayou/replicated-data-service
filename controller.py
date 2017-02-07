@@ -3,6 +3,17 @@
 import select
 import socket
 import sys
+import pymysql
+
+def checkmoney():
+  db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+  cursor = db.cursor()
+  cursor.execute("use senior_design;")
+  cursor.execute("select * from property where name='client1';")
+  result = cursor.fetchall()
+  db.close()
+  return (result[0])
+
 
 host = 'localhost' # what address is the server listening on
 port = 9986 # what port the server accepts connections on
@@ -35,16 +46,24 @@ while running:
       # select has indicated that these sockets have data available to recv
       data = s.recv(BUFFER_SIZE)
       if data:
-        #make connection to server or check if server is running
-        s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result=s2.connect_ex((host, server_port))
-        if result ==0:
-            s2.send(data)
-            return_statement = '101 - Success.'
-            s.send(return_statement.encode('utf-8'))
+         #execute database queries here-----------------------------------------------------
+        if data.decode("utf-8")=='checkmoney':
+          result=checkmoney()
+          s.send(str(result).encode('utf-8'))
+        #execute database queries here-----------------------------------------------------
+
+        #if it is not special function, send message to server?
         else:
-            return_statement = 'server is down'
-            s.send(return_statement.encode('utf-8'))
+        #make connection to server or check if server is running
+          s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+          result=s2.connect_ex((host, server_port))
+          if result ==0:
+              s2.send(data)
+              return_statement = '101 - Success.'
+              s.send(return_statement.encode('utf-8'))
+          else:
+              return_statement = 'server is down'
+              s.send(return_statement.encode('utf-8'))
 
       else: #if recv() returned NULL, that usually means the sender wants
             #to close the socket.

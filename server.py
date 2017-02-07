@@ -3,6 +3,8 @@
 import select
 import socket
 import sys
+import pymysql
+
 
 host = 'localhost' # what address is the server listening on
 port = 9987 # what port the server accepts connections on
@@ -35,7 +37,6 @@ while running:
       data = s.recv(BUFFER_SIZE)
       if data:
         print ('%s received from %s'%(data,s.getsockname()))
-
         #Uncomment below to echo the recv'd data back
         #to the sender... loopback!
         return_statement = '101 - Success.'
