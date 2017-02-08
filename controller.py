@@ -4,24 +4,16 @@ import select
 import socket
 import sys
 import pymysql
-
-def checkmoney():
-  db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
-  cursor = db.cursor()
-  cursor.execute("use senior_design;")
-  cursor.execute("select * from property where name='client1';")
-  result = cursor.fetchall()
-  db.close()
-  return (result[0])
-
+from random import randint
 
 host = 'localhost' # what address is the server listening on
-port = 9986 # what port the server accepts connections on
-server_port=9987
+port = 9996 # what port the server accepts connections on
+server_port_one = 9997
+server_port_two = 9998
 backlog = 5  # how many connections to accept
 BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
 
-#now initialize the server and accept connections at localhost:50000
+#now initialize the server and accept connections
 
 controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 controller.bind((host,port))
@@ -29,47 +21,49 @@ controller.listen(backlog)
 input = [controller,] #a list of all connections we want to check for data
                   #each time we call select.select()
 
+#definition here-----------------------------------------------------
+def foward_to_server(data_from_client, client_to_controller, controller_to_server, result):
+  # Connect controller to ser{ver
+  if result == 0: # server is alive if result = 0
+    controller_to_server.send(data_from_client) # foward data from client to servers
+    data_from_server = controller_to_server.recv(BUFFER_SIZE) # recieve feedback from the server
+    client_to_controller.send(data_from_server) # foward back to client
+  else: # server is dead
+    return_statement = 'Server is down, unable to process request.'
+    client_to_controller.send(return_statement.encode('utf-8'))
+
 running = 1 #set running to zero to close the server
-print('controller is up and awaiting connections! \n')
+print('Controller is up and awaiting connections! \n')
 while running:
   inputready,outputready,exceptready = select.select(input,[],[])
 
-  for s in inputready: #check each socket that select() said has available data
+  for client_to_controller in inputready: #check each socket that select() said has available data
 
-    if s == controller: #if select returns our server socket, there is a new
-                    #remote socket trying to connect
+    if client_to_controller == controller: #if select returns our server socket, there is a new remote socket trying to connect
       client, address = controller.accept()
       input.append(client) #add it to the socket list so we can check it now
       print ('New connection with controller added - id is %s'%str(address))
 
     else:
       # select has indicated that these sockets have data available to recv
-      data = s.recv(BUFFER_SIZE)
-      if data:
-         #execute database queries here-----------------------------------------------------
-        if data.decode("utf-8")=='checkmoney':
-          result=checkmoney()
-          s.send(str(result).encode('utf-8'))
-        #execute database queries here-----------------------------------------------------
+      data_from_client = client_to_controller.recv(BUFFER_SIZE) # Between client and controller - foward response to server
+      if data_from_client:
+        turn = randint(1,2)
+        controller_to_server_one = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result_s1 = controller_to_server_one.connect_ex((host, server_port_one))
+        controller_to_server_two = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result_s2 = controller_to_server_two.connect_ex((host, server_port_two))
+        if turn == 1:
+          foward_to_server(data_from_client, client_to_controller, controller_to_server_one, result_s1)
+        if turn == 2:
+          foward_to_server(data_from_client, client_to_controller, controller_to_server_two, result_s2)
 
-        #if it is not special function, send message to server?
-        else:
-        #make connection to server or check if server is running
-          s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-          result=s2.connect_ex((host, server_port))
-          if result ==0:
-              s2.send(data)
-              return_statement = '101 - Success.'
-              s.send(return_statement.encode('utf-8'))
-          else:
-              return_statement = 'server is down'
-              s.send(return_statement.encode('utf-8'))
 
       else: #if recv() returned NULL, that usually means the sender wants
             #to close the socket.
         print('Action complete - closing connection %s with server.' % (str(address)))
-        s.close()
-        input.remove(s)
+        client_to_controller.close()
+        input.remove(client_to_controller)
 
 #if running is ever set to zero, we will call this
 controller.close()

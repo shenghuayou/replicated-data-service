@@ -3,7 +3,7 @@
 import socket
 
 TCP_IP = 'localhost'
-TCP_PORT = 9986
+TCP_PORT = 9996
 BUFFER_SIZE = 1024
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

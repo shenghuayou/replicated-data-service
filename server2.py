@@ -16,7 +16,7 @@ def checkmoney():
 
 
 host = 'localhost' # what address is the server listening on
-port = 9997 # what port the server accepts connections on
+port = 9998 # what port the server accepts connections on
 backlog = 5  # how many connections to accept
 BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
 
