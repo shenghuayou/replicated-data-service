@@ -34,6 +34,7 @@ def foward_to_server(data_from_client, client_to_controller, controller_to_serve
 
 running = 1 #set running to zero to close the server
 server_list = []
+already_connected = []
 print('Controller is up and awaiting connections! \n')
 while running:
   inputready,outputready,exceptready = select.select(input,[],[])
@@ -42,7 +43,7 @@ while running:
     if client_to_controller == controller: #if select returns our server socket, there is a new remote socket trying to connect
       client, address = controller.accept()
       input.append(client) #add it to the socket list so we can check it now
-      print ('New connection with controller added - id is %s' % str(address))
+      print ('New connection with controller added - information is %s' % (client))
     else:
       # select has indicated that these sockets have data available to recv
       data_from_client = client_to_controller.recv(BUFFER_SIZE) # Between client and controller - foward response to server
@@ -52,6 +53,7 @@ while running:
             server_port = server_port[:-1]
             print('Server identified - the port is %s' % server_port)
             server_list.append(int(server_port))
+            already_connected.append(False)
             print("Server list => %s " % (server_list))
         else:
             #turn = randint(1,2)
@@ -62,9 +64,15 @@ while running:
             else:
                 turn = randint(0,len(server_list)-1)
                 print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
-                controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
-                result = controller_to_server.connect_ex((host, int(server_list[turn])))
-                foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
+                if already_connected[turn] == False:
+                    controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
+                    result = controller_to_server.connect_ex((host, int(server_list[turn])))
+                    foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
+                    already_connected[turn] = True
+                else:
+                    foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
+                    already_connected[:] = [False] * len(already_connected) # reset to false
+                    already_connected[turn] = True
 
       else: #if recv() returned NULL, that usually means the sender wants to close the socket.
         print('Action complete - closing connection %s with server.' % (str(address)))
