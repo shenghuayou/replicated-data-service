@@ -32,6 +32,18 @@ def foward_to_server(data_from_client, client_to_controller, controller_to_serve
     return_statement = 'Server is down, unable to process request.'
     client_to_controller.send(return_statement.encode('utf-8'))
 
+def ping_servers(servers, connect_status):
+  for server in servers:
+    controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
+    result = controller_to_server.connect_ex((host, server))
+    if result == 0:
+      pass # keep port in server list (server is connected)
+    else:
+      print('Server %s has disconnected from the controller' % (server))
+      index = servers.index(server) # get the index of the disconnected server
+      connect_status.pop(index) # remove it from the connect_status list
+      servers.remove(server) # remove port from server list (server disconnected)
+
 running = 1 #set running to zero to close the server
 server_list = []
 already_connected = []
@@ -43,39 +55,40 @@ while running:
     if client_to_controller == controller: #if select returns our server socket, there is a new remote socket trying to connect
       client, address = controller.accept()
       input.append(client) #add it to the socket list so we can check it now
-      print ('New connection with controller added - information is %s' % (client))
+      print ('New connection with controller added - information is %s' % (str(address)))
     else:
       # select has indicated that these sockets have data available to recv
       data_from_client = client_to_controller.recv(BUFFER_SIZE) # Between client and controller - foward response to server
       if data_from_client:
-        if ':' in str(data_from_client):
+        if '0x4920616d206120736572766572:' in str(data_from_client):
             server_port = str(data_from_client).split(':')[-1]
             server_port = server_port[:-1]
-            print('Server identified - the port is %s' % server_port)
+            print('Server identified - the port is %s' % (str(server_port)))
             server_list.append(int(server_port))
             already_connected.append(False)
             print("Server list => %s " % (server_list))
         else:
-            #turn = randint(1,2)
-            print("Server list length => %s " % (len(server_list)))
+            turn = randint(1,2)
             if len(server_list) <= 0:
                 return_statement = 'All servers are down, unable to process request.'
                 client_to_controller.send(return_statement.encode('utf-8'))
             else:
-                turn = randint(0,len(server_list)-1)
-                print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
-                if already_connected[turn] == False:
+                turn = randint(0,len(server_list)-1) # determine which server to direct to
+                if already_connected[turn] == False: # reconnect 
+                    print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
                     result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
                     already_connected[turn] = True
-                else:
+                else: # already connected
+                    print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
                     already_connected[:] = [False] * len(already_connected) # reset to false
                     already_connected[turn] = True
 
       else: #if recv() returned NULL, that usually means the sender wants to close the socket.
         print('Action complete - closing connection %s with server.' % (str(address)))
+        ping_servers(server_list,already_connected) # ping all connected ports, remove any disconnected servers
         client_to_controller.close()
         input.remove(client_to_controller)
 
