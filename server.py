@@ -3,16 +3,16 @@
 import select
 import socket
 import sys
-#import pymysql
+import pymysql
 
-#def checkmoney():
-#  db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
-#  cursor = db.cursor()
-#  cursor.execute("use senior_design;")
-#  cursor.execute("select * from property where name='client1';")
-#  result = cursor.fetchall()
-#  db.close()
-#  return (result[0])
+def checkmoney():
+ db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+ cursor = db.cursor()
+ cursor.execute("use senior_design;")
+ cursor.execute("select * from property where name='client1';")
+ result = cursor.fetchall()
+ db.close()
+ return (result[0])
 
 
 host = 'localhost' # what address is the server listening on
@@ -48,7 +48,7 @@ if connection_result == 0:
           if data:
             #execute database queries here-----------------------------------------------------
             if data.decode("utf-8")=='checkmoney':
-              #result = checkmoney()
+              result = checkmoney()
               s.send(str(result).encode('utf-8'))
             else:
               print ('%s received from %s'%(data,s.getsockname()))
