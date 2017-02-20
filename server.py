@@ -5,14 +5,21 @@ import socket
 import sys
 import pymysql
 
-def checkmoney():
- db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
- cursor = db.cursor()
- cursor.execute("use senior_design;")
- cursor.execute("select * from property where name='client1';")
- result = cursor.fetchall()
- db.close()
- return (result[0])
+def checkmoney(username, password):
+    #connect to database and perform query
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("use senior_design;")
+    cursor.execute("select username,money from property where username=%s and password=%s;",(username,password))
+    db.close()
+
+    #check if query is empty
+    if cursor.rowcount == 0 :
+        return 'invalid username or password'
+    else:
+        result = cursor.fetchall()
+        print ('result:%s' % result)
+        return (result[0])
 
 
 host = 'localhost' # what address is the server listening on
@@ -46,12 +53,19 @@ if connection_result == 0:
           # select has indicated that these sockets have data available to recv
           data = s.recv(BUFFER_SIZE)
           if data:
+            #split username, password and message
+            data_decode = data.decode("utf-8")
+            username = str(data_decode).split('0x757365726e616d65:')[0]
+            other_data = str(data_decode).split('0x757365726e616d65:')[1]
+            password = str(other_data).split('0x70617373776f7264:')[0]
+            message = str(other_data).split('0x70617373776f7264:')[1]
+
             #execute database queries here-----------------------------------------------------
-            if data.decode("utf-8")=='checkmoney':
-              result = checkmoney()
+            if message=='checkmoney':
+              result = checkmoney(username,password)
               s.send(str(result).encode('utf-8'))
             else:
-              print ('%s received from %s'%(data,s.getsockname()))
+              print ('%s received from %s'%(message,s.getsockname()))
               return_statement = 'Successful foward from controller .'
               s.send(return_statement.encode('utf-8'))
           else: # close the socket (connection)
