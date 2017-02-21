@@ -62,13 +62,12 @@ while running:
       if data_from_client:
         if '0x4920616d206120736572766572:' in str(data_from_client):
             server_port = str(data_from_client).split(':')[-1]
-            server_port = server_port[:-1]
+            server_port = server_port[:-1] # For some reason on AmazonEC2, we need to remove the [:-1]
             print('Server identified - the port is %s' % (str(server_port)))
             server_list.append(int(server_port))
             already_connected.append(False)
             print("Server list => %s " % (server_list))
         else:
-            turn = randint(1,2)
             if len(server_list) <= 0:
                 return_statement = 'All servers are down, unable to process request.'
                 client_to_controller.send(return_statement.encode('utf-8'))

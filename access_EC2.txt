@@ -4,15 +4,16 @@ access EC2
 
 chmod 400 SeniorServer.pem
 
-
-
-Server: ssh -i "SeniorServer.pem" ec2-user@ec2-54-245-10-201.us-west-2.compute.amazonaws.com
+Server: ssh -i "SeniorServer.pem" ec2-user@ec2-54-149-37-172.us-west-2.compute.amazonaws.com
 password for root:123456
-
-
-Control: ssh -i "SeniorServer.pem" ec2-user@ec2-54-200-255-44.us-west-2.compute.amazonaws.com
-
 
 DB: mysql -h seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com -P 3306 -u root -p
 username: root
 password: qwe123456
+
+
+use command "screen" to keep running server codes and controller codes on AWS
+screen  #create a new screen session
+screen -ls  #check running screens
+screen -r screenID   #resume to a screen
+screen -X -S screenID kill   #end a screen

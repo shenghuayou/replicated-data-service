@@ -35,10 +35,13 @@ print('Client is up and connected to controller. </br>')
 i = 0
 while i < 1:
 	MESSAGE = str(user_from_html) + str(user_recognizer) + str(pass_from_html) + str(pass_recognizer) + str(input_from_html)
-	s.send(MESSAGE.encode('utf-8'))
+	s.send(MESSAGE.encode('utf-8')) # Send request to server(s)
 	data = s.recv(BUFFER_SIZE)
-	if data:
+	if data: # POST request
 		print('Response from the controller %s </br>' % data)
+		print("<META HTTP-EQUIV=refresh CONTENT=\"5;URL=http://localhost:8888/\">\n") # POST request -> redirect client 
+																			# this closes the connection, remakes new one.
+		
 	pass
 	i += 1
 s.close()
