@@ -9,7 +9,6 @@ def checkmoney(username, password):
     #connect to database and perform query
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
-    cursor.execute("use senior_design;")
     cursor.execute("select username,money from property where username=%s and password=%s;",(username,password))
     db.close()
 
@@ -20,6 +19,25 @@ def checkmoney(username, password):
         result = cursor.fetchall()
         print ('result:%s' % result)
         return (result[0])
+
+def addmoney(amount,username,password):
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("select money from property where username=%s and password=%s;",(username,password))
+    db.close()
+
+#check username and password
+def login(username,password):
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("select * from property where username=%s and password=%s;",(username,password))
+    db.close()
+    if cursor.rowcount == 0 :
+        return 0
+    else:
+        return 1
+
+
 
 
 host = 'localhost' # what address is the server listening on
@@ -54,14 +72,16 @@ if connection_result == 0:
           data = s.recv(BUFFER_SIZE)
           if data:
             #split username, password and message
-            data_decode = data.decode("utf-8")
-            username = str(data_decode).split('0x757365726e616d65:')[0]
-            other_data = str(data_decode).split('0x757365726e616d65:')[1]
-            password = str(other_data).split('0x70617373776f7264:')[0]
-            message = str(other_data).split('0x70617373776f7264:')[1]
+            if '0x757365726e616d65:' in str(data):
+              data_decode = data.decode("utf-8")
+              username = str(data_decode).split('0x757365726e616d65:')[0]
+              password = str(data_decode).split('0x757365726e616d65:')[1]
 
+              #check if username and password are good
+              login_result = str(login(username,password))
+              s.send(login_result.encode('utf-8'))
             #execute database queries here-----------------------------------------------------
-            if message=='checkmoney':
+            elif message=='checkmoney':
               result = checkmoney(username,password)
               s.send(str(result).encode('utf-8'))
             else:
