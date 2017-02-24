@@ -34,7 +34,10 @@ s.send(MESSAGE.encode('utf-8')) # Send request to server(s)
 data = s.recv(BUFFER_SIZE)
 if data: # POST request
 	if str(data) == '1':
-		print("<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/dashboard.html\">\n")
+		#if user is verified. pass user infomation to dashboard.html through url
+		#may need encode url later for security
+		print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/dashboard.html?html_user=%s&html_pass=%s\">\n' % 
+			(user_from_html,pass_from_html))
 	else:
 		print('failed to go next page')
 s.close()

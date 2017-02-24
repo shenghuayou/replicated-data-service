@@ -7,5 +7,20 @@
 <div align="center">
 	<h1>Here is dashboard page</h1>
 </div>
+<script type="text/javascript">
+//function to get url values.
+	function getUrlVars() {
+	var vars = {};
+	var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+	vars[key] = value;
+	});
+	return vars;
+	}
+
+var html_user = getUrlVars()["html_user"];
+var html_pass = getUrlVars()["html_pass"]
+</script>
+<h3>username: <script type="text/javascript">document.write(html_user)</script></h3>
+<h3>password: <script type="text/javascript">document.write(html_pass)</script></h3>
 </body>
 </html>
