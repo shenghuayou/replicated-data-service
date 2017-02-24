@@ -17,10 +17,22 @@
 	return vars;
 	}
 
-var html_user = getUrlVars()["html_user"];
-var html_pass = getUrlVars()["html_pass"]
+var html_user = getUrlVars()["login_user"];
+var html_pass = getUrlVars()["login_pass"]
 </script>
 <h3>username: <script type="text/javascript">document.write(html_user)</script></h3>
 <h3>password: <script type="text/javascript">document.write(html_pass)</script></h3>
+
+
+<form name="client" action="/cgi-bin/dashboard.py" method="get">
+		Username: <input type="text" name="html_user">
+		<br>
+		Password: <input type="text" name="html_pass">
+		<br>
+		Message: <input type="text" name="html_input">
+		<br>
+		<input type="submit" value="submit">
+</form> 
+
 </body>
 </html>

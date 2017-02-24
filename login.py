@@ -8,8 +8,8 @@ print ('<title>Client</title>')
 
 #get data from HTML
 form = cgi.FieldStorage()
-user_from_html = form.getvalue('html_user')
-pass_from_html = form.getvalue('html_pass')
+user_from_html = form.getvalue('login_user')
+pass_from_html = form.getvalue('login_pass')
 
 #recognizer to recognize where username and password are
 user_recognizer = '0x757365726e616d65:'
@@ -36,7 +36,7 @@ if data: # POST request
 	if str(data) == '1':
 		#if user is verified. pass user infomation to dashboard.html through url
 		#may need encode url later for security
-		print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/dashboard.html?html_user=%s&html_pass=%s\">\n' % 
+		print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/dashboard.html?login_user=%s&login_pass=%s\">\n' % 
 			(user_from_html,pass_from_html))
 	else:
 		print('failed to go next page')

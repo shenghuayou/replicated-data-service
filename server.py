@@ -20,11 +20,20 @@ def checkmoney(username, password):
         print ('result:%s' % result)
         return (result[0])
 
-def addmoney(amount,username,password):
+def addmoney(username,password,amount):
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
     cursor.execute("select money from property where username=%s and password=%s;",(username,password))
+    result = cursor.fetchall()
+    result = int(result[0][0])
+    money = result + amount
+    print ('money:%s' % money)
+    cursor.execute("update property set money=%s where username=%s and password=%s;",(money,username,password))
+    db.commit()
     db.close()
+    
+
+
 
 #check username and password
 def login(username,password):
@@ -37,6 +46,37 @@ def login(username,password):
     else:
         return 1
 
+#decode message from client, take data and socket(s) as parameter
+def decode_message(data,s):
+    #split username, password and message for database query
+    if '0x757365726e616d65:' in str(data) and '0x70617373776f7264:' in str(data):
+      data_decode = data.decode("utf-8")
+      username = str(data_decode).split('0x757365726e616d65:')[0]
+      other_data = str(data_decode).split('0x757365726e616d65:')[1]
+      password = str(other_data).split('0x70617373776f7264:')[0]
+      message = str(other_data).split('0x70617373776f7264:')[1]
+      if message=='checkmoney':
+        result = checkmoney(username,password)
+        s.send(str(result).encode('utf-8'))
+      elif message=='addmoney':
+        addmoney(username,password,1)
+        response_message = "you added money"
+        s.send(str(response_message).encode('utf-8'))
+
+
+    #split username and password for login check
+    elif '0x757365726e616d65:' in str(data):
+      data_decode = data.decode("utf-8")
+      username = str(data_decode).split('0x757365726e616d65:')[0]
+      password = str(data_decode).split('0x757365726e616d65:')[1]
+    #check if username and password are good
+      login_result = str(login(username,password))
+      s.send(login_result.encode('utf-8'))
+
+    else:
+      print ('%s received from %s'%(message,s.getsockname()))
+      return_statement = 'Successful foward from controller .'
+      s.send(return_statement.encode('utf-8'))
 
 
 
@@ -71,23 +111,7 @@ if connection_result == 0:
           # select has indicated that these sockets have data available to recv
           data = s.recv(BUFFER_SIZE)
           if data:
-            #split username, password and message
-            if '0x757365726e616d65:' in str(data):
-              data_decode = data.decode("utf-8")
-              username = str(data_decode).split('0x757365726e616d65:')[0]
-              password = str(data_decode).split('0x757365726e616d65:')[1]
-
-              #check if username and password are good
-              login_result = str(login(username,password))
-              s.send(login_result.encode('utf-8'))
-            #execute database queries here-----------------------------------------------------
-            elif message=='checkmoney':
-              result = checkmoney(username,password)
-              s.send(str(result).encode('utf-8'))
-            else:
-              print ('%s received from %s'%(message,s.getsockname()))
-              return_statement = 'Successful foward from controller .'
-              s.send(return_statement.encode('utf-8'))
+            decode_message(data,s)
           else: # close the socket (connection)
             print('Action complete - closing connection %s with controller.' % (str(address)))
             s.close()
