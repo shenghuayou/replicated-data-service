@@ -25,14 +25,17 @@ var html_pass = getUrlVars()["login_pass"]
 
 
 <form name="client" action="/cgi-bin/dashboard.py" method="get">
-		Username: <input type="text" name="html_user">
-		<br>
-		Password: <input type="text" name="html_pass">
-		<br>
+		<input type="hidden" name="html_user" id="id_user">
+		<input type="hidden" name="html_pass" id='id_pass'>
 		Message: <input type="text" name="html_input">
 		<br>
 		<input type="submit" value="submit">
 </form> 
+
+<script type="text/javascript">
+	document.getElementById("id_user").value = html_user;
+	document.getElementById("id_pass").value = html_pass;
+</script>
 
 </body>
 </html>

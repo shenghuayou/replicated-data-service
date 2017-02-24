@@ -11,7 +11,6 @@ def checkmoney(username, password):
     cursor = db.cursor()
     cursor.execute("select username,money from property where username=%s and password=%s;",(username,password))
     db.close()
-
     #check if query is empty
     if cursor.rowcount == 0 :
         return 'invalid username or password'
@@ -32,9 +31,6 @@ def addmoney(username,password,amount):
     db.commit()
     db.close()
     
-
-
-
 #check username and password
 def login(username,password):
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
@@ -55,14 +51,16 @@ def decode_message(data,s):
       other_data = str(data_decode).split('0x757365726e616d65:')[1]
       password = str(other_data).split('0x70617373776f7264:')[0]
       message = str(other_data).split('0x70617373776f7264:')[1]
+
+      #user functions
       if message=='checkmoney':
         result = checkmoney(username,password)
         s.send(str(result).encode('utf-8'))
-      elif message=='addmoney':
-        addmoney(username,password,1)
+      elif 'addmoney' in message:
+        amount_money = message.split('addmoney')[1]
+        addmoney(username,password,int(amount_money))
         response_message = "you added money"
         s.send(str(response_message).encode('utf-8'))
-
 
     #split username and password for login check
     elif '0x757365726e616d65:' in str(data):
