@@ -7,6 +7,8 @@ import pymysql
 
 def checkmoney(username, password):
     #connect to database and perform query
+    
+    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
     cursor.execute("select username,money from property where username=%s and password=%s;",(username,password))
@@ -20,6 +22,7 @@ def checkmoney(username, password):
         return (result[0])
 
 def addmoney(username,password,amount):
+    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
     cursor.execute("select money from property where username=%s and password=%s;",(username,password))
@@ -33,6 +36,7 @@ def addmoney(username,password,amount):
     
 #check username and password
 def login(username,password):
+    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
     cursor.execute("select * from property where username=%s and password=%s;",(username,password))

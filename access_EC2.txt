@@ -17,3 +17,8 @@ screen  #create a new screen session
 screen -ls  #check running screens
 screen -r screenID   #resume to a screen
 screen -X -S screenID kill   #end a screen
+
+
+MySQL:
+create table property (username varchar(20), password varchar(20), money int(10));
+insert into property (username,password,money) values ("client1","123",100);
