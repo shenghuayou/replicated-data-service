@@ -7,25 +7,18 @@
   <link rel="stylesheet" href="assets/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <script src="assets/css/bootstrap.min.js"></script>
-  <script src="assets/css/jquery.min.js"></script>
-</head>
-<body>
+  <script src="http://code.jquery.com/jquery-1.9.1.js"></script> 
+<script> 
+$(function() {
+$("#my_nav").load("nav.html"); 
+}); 
+</script> 
 
-<nav class="navbar navbar-inverse">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#" style="transform: translateX(-50%); left: 50%; position: absolute;"> 
-        Replicated Data Service
-      </a>
-    </div>
-    <div class="collapse navbar-collapse" id="myNavbar">
-      <ul class="nav navbar-nav navbar-right">
-        <li><a href="register.html"><span class="glyphicon glyphicon-user"></span>Register</a></li>
-        <li><a href="login.html"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+</head>
+
+<body>
+<div id='my_nav'>
+</div>
   
 <div class="container">
   <div class="col">
