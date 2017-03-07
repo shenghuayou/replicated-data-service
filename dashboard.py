@@ -4,7 +4,7 @@ import socket
 import cgi
 
 print ("Content-type:text/html\r\n\r\n")
-print ('<title>Client</title>')
+print ('<title>Dashboard Client</title>')
 
 #get data from HTML
 form = cgi.FieldStorage()
@@ -15,14 +15,6 @@ pass_from_html = form.getvalue('html_pass')
 #recognizer to recognize where username and password are
 user_recognizer = '0x757365726e616d65:'
 pass_recognizer = '0x70617373776f7264:'
-
-#check if input value equal to None
-if str(input_from_html) == 'None':
-	input_from_html = ''
-if str(user_from_html) == 'None':
-	user_from_html = ''
-if str(pass_from_html) == 'None':
-	pass_from_html = ''
 
 #connect to server
 TCP_IP = 'localhost'

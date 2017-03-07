@@ -33,6 +33,14 @@ def addmoney(username,password,amount):
     cursor.execute("update property set money=%s where username=%s and password=%s;",(money,username,password))
     db.commit()
     db.close()
+
+#insert register info into db...may need to check exist user later.
+def register(username,password,amount):
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("insert into property (username,password,money) values (%s,%s,%s);",(username,password,amount))
+    db.commit()
+    db.close()
     
 #check username and password
 def login(username,password):
@@ -65,6 +73,18 @@ def decode_message(data,s):
         addmoney(username,password,int(amount_money))
         response_message = "you added money"
         s.send(str(response_message).encode('utf-8'))
+
+    #this will decode register message
+    elif '0x7265676973746572_1:' in str(data) and '0x7265676973746572_2:' in str(data):
+      data_decode = data.decode("utf-8")
+      username = str(data_decode).split('0x7265676973746572_1:')[0]
+      other_data = str(data_decode).split('0x7265676973746572_1:')[1]
+      password = str(other_data).split('0x7265676973746572_2:')[0]
+      amount = str(other_data).split('0x7265676973746572_2:')[1]
+      register(username,password,int(amount))
+      response_message = "you have registered account"
+      s.send(str(response_message).encode('utf-8'))
+
 
     #split username and password for login check
     elif '0x757365726e616d65:' in str(data):
@@ -113,6 +133,7 @@ if connection_result == 0:
           # select has indicated that these sockets have data available to recv
           data = s.recv(BUFFER_SIZE)
           if data:
+            print(data)
             decode_message(data,s)
           else: # close the socket (connection)
             print('Action complete - closing connection %s with controller.' % (str(address)))
