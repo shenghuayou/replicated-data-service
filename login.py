@@ -41,9 +41,11 @@ if switch == 1:
 			print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/dashboard.html?login_user=%s&login_pass=%s\">\n' % 
 				(user_from_html,pass_from_html))
 		else:
-			print('failed to go next page: invalid username or password')
+			print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/login.html\"">')
+			print('<script> alert("failed to go next page: invalid username or password")</script>')
+
 	s.close()
 
 else:
-	print("user and pass can't be blank")
-
+	print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/login.html\"">')
+	print('<script> alert("username and password can not be blank")</script>')

@@ -49,8 +49,9 @@ if switch == 1:
 	data = s.recv(BUFFER_SIZE)
 	if data:
 		decode_data=str(data.decode('utf-8'))
-		print(decode_data)
+		print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/login.html\"">')
+		print('<script> alert("%s")</script>' % decode_data)
 	s.close()
 else:
-	print("user and pass can't be blank, money can't be letters")
-
+	print('<META HTTP-EQUIV=refresh CONTENT=\"0;URL=http://localhost:8888/register.html\"">')
+	print('<script> alert("username and password can not be blank, money can not be letters")</script>')
