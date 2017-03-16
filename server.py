@@ -73,6 +73,9 @@ def decode_message(data,s):
         addmoney(username,password,int(amount_money))
         response_message = "you added money"
         s.send(str(response_message).encode('utf-8'))
+      else:
+        response_message = "invalid message"
+        s.send(str(response_message).encode('utf-8'))
 
     #this will decode register message
     elif '0x7265676973746572_1:' in str(data) and '0x7265676973746572_2:' in str(data):
@@ -114,7 +117,7 @@ input = [server,] #a list of all connections we want to check for data
                   #each time we call select.select()
 
 running = 1 #set running to zero to close the server
-print('Server is up and connecting to the controller! \n')
+print('Server with port:%s is up and connecting to the controller! \n' % port)
 controller_port = 9996
 server_to_controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 connection_result = server_to_controller.connect_ex((host, controller_port))

@@ -5,7 +5,9 @@ access EC2
 chmod 400 SeniorServer.pem
 
 Server: ssh -i "SeniorServer.pem" ec2-user@ec2-54-149-37-172.us-west-2.compute.amazonaws.com
-password for root:123456
+password for root:qwe123456
+
+server2: ssh -i "senior_design_victor.pem" ec2-user@ec2-54-69-160-179.us-west-2.compute.amazonaws.com
 
 DB: mysql -h seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com -P 3306 -u root -p
 username: root
@@ -22,3 +24,62 @@ screen -X -S screenID kill   #end a screen
 MySQL:
 create table property (username varchar(20), password varchar(20), money int(10));
 insert into property (username,password,money) values ("client1","123",100);
+
+
+To create more replicated server/db:
+
+Master (RDS) - all in mysql, no Bash - remember to remove [] from statements
+	1. Create new slave
+		CREATE USER '[SLAVE USERNAME]'@'%' IDENTIFIED BY '[SLAVE PASSWORD]'; 
+	2. Give it access 
+		GRANT REPLICATION SLAVE ON *.* TO '[SLAVE USERNAME]'@'%';  
+
+Slave (Server) - 
+	1. [Bash] Import the database from master
+		mysqldump -h seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com -u root -p senior_design > dump.sql
+
+	2. [Bash] Import the dump.sql into your database 
+		mysql senior_design < dump.sql
+
+	3. [Bash] Edit the /etc/my.cnf - will require root access, add the follow lines
+	**Remember to keep server-id different (currently using 10, so next is 11, etc...)
+		# Give the server a unique ID
+		server-id               = #CHANGE THIS NUMBER#
+		#
+		# Ensure there's a relay log
+		relay-log               = /var/lib/mysql/mysql-relay-bin.log
+		#
+		# Keep the binary log on
+		log_bin                 = /var/lib/mysql/mysql-bin.log
+		binlog_do_db            = senior_design
+
+	4. [Bash] Restart mysqld
+		service mysqld restart
+
+Master-Slave Connection Creation
+	1. On master (RDS) - type
+		show master status;
+		** We will need to keep note of File and Position
+		+----------------------------+----------+--------------+------------------+-------------------+
+		| File                       | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+		+----------------------------+----------+--------------+------------------+-------------------+
+		| mysql-bin-changelog.010934 |      400 |              |                  |                   |
+		+----------------------------+----------+--------------+------------------+-------------------+
+	2. On the slave, enter mysql then enter
+		CHANGE MASTER TO MASTER_HOST='seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com', MASTER_USER='[SLAVE NAME]', MASTER_PASSWORD='[SLAVE PWD]', MASTER_LOG_FILE='[MASTER FILE] ', MASTER_LOG_POS= [MASTER POSITION];
+	3. On the slave, enter "start slave;"
+	4. Make sure the slave started - "show slave status \g"
+	5. You can always triple check by adding a new row to senior_design in master then see if it updates in slave.
+
+	TROUBLESHOOTING - If for some reason you mess up the slave in step 2.
+			on the slave side
+					reset slave;
+				then repeat step 2 - 5
+
+
+
+Slave user pass:
+Slave 1 - username: slave1 pass: slave1pwd
+Slave 2 - username: slave2 pass: [slave2]
+
+CHANGE MASTER TO MASTER_HOST='seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com', MASTER_USER='slave2', MASTER_PASSWORD='[slave2]', MASTER_LOG_FILE='mysql-bin-changelog.010945', MASTER_LOG_POS= 400;
