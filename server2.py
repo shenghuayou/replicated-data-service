@@ -3,16 +3,103 @@
 import select
 import socket
 import sys
-#import pymysql
+import pymysql
 
-#def checkmoney():
-#  db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
-#  cursor = db.cursor()
-#  cursor.execute("use senior_design;")
-#  cursor.execute("select * from property where name='client1';")
-#  result = cursor.fetchall()
-#  db.close()
-#  return (result[0])
+def checkmoney(username, password):
+    #connect to database and perform query
+    
+    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("select username,money from property where username=%s and password=%s;",(username,password))
+    db.close()
+    #check if query is empty
+    if cursor.rowcount == 0 :
+        return 'invalid username or password'
+    else:
+        result = cursor.fetchall()
+        print ('result:%s' % result)
+        return (result[0])
+
+def addmoney(username,password,amount):
+    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("select money from property where username=%s and password=%s;",(username,password))
+    result = cursor.fetchall()
+    result = int(result[0][0])
+    money = result + amount
+    print ('money:%s' % money)
+    cursor.execute("update property set money=%s where username=%s and password=%s;",(money,username,password))
+    db.commit()
+    db.close()
+
+#insert register info into db...may need to check exist user later.
+def register(username,password,amount):
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("insert into property (username,password,money) values (%s,%s,%s);",(username,password,amount))
+    db.commit()
+    db.close()
+    
+#check username and password
+def login(username,password):
+    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("select * from property where username=%s and password=%s;",(username,password))
+    db.close()
+    if cursor.rowcount == 0 :
+        return 0
+    else:
+        return 1
+
+#decode message from client, take data and socket(s) as parameter
+def decode_message(data,s):
+    #split username, password and message for database query
+    if '0x757365726e616d65:' in str(data) and '0x70617373776f7264:' in str(data):
+      data_decode = data.decode("utf-8")
+      username = str(data_decode).split('0x757365726e616d65:')[0]
+      other_data = str(data_decode).split('0x757365726e616d65:')[1]
+      password = str(other_data).split('0x70617373776f7264:')[0]
+      message = str(other_data).split('0x70617373776f7264:')[1]
+
+      #user functions
+      if message=='checkmoney':
+        result = checkmoney(username,password)
+        s.send(str(result).encode('utf-8'))
+      elif 'addmoney' in message:
+        amount_money = message.split('addmoney')[1]
+        addmoney(username,password,int(amount_money))
+        response_message = "you added money"
+        s.send(str(response_message).encode('utf-8'))
+
+    #this will decode register message
+    elif '0x7265676973746572_1:' in str(data) and '0x7265676973746572_2:' in str(data):
+      data_decode = data.decode("utf-8")
+      username = str(data_decode).split('0x7265676973746572_1:')[0]
+      other_data = str(data_decode).split('0x7265676973746572_1:')[1]
+      password = str(other_data).split('0x7265676973746572_2:')[0]
+      amount = str(other_data).split('0x7265676973746572_2:')[1]
+      register(username,password,int(amount))
+      response_message = "you have registered account"
+      s.send(str(response_message).encode('utf-8'))
+
+
+    #split username and password for login check
+    elif '0x757365726e616d65:' in str(data):
+      data_decode = data.decode("utf-8")
+      username = str(data_decode).split('0x757365726e616d65:')[0]
+      password = str(data_decode).split('0x757365726e616d65:')[1]
+    #check if username and password are good
+      login_result = str(login(username,password))
+      s.send(login_result.encode('utf-8'))
+
+    else:
+      print ('%s received from %s'%(message,s.getsockname()))
+      return_statement = 'Successful foward from controller .'
+      s.send(return_statement.encode('utf-8'))
+
 
 
 host = 'localhost' # what address is the server listening on
@@ -46,14 +133,8 @@ if connection_result == 0:
           # select has indicated that these sockets have data available to recv
           data = s.recv(BUFFER_SIZE)
           if data:
-            #execute database queries here-----------------------------------------------------
-            if data.decode("utf-8")=='checkmoney':
-              #result = checkmoney()
-              s.send(str(result).encode('utf-8'))
-            else:
-              print ('%s received from %s'%(data,s.getsockname()))
-              return_statement = 'Successful foward from controller .'
-              s.send(return_statement.encode('utf-8'))
+            print(data)
+            decode_message(data,s)
           else: # close the socket (connection)
             print('Action complete - closing connection %s with controller.' % (str(address)))
             s.close()
