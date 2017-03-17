@@ -51,7 +51,7 @@ Slave (Server) -
 		#
 		# Keep the binary log on
 		log_bin                 = /var/lib/mysql/mysql-bin.log
-		binlog_do_db            = senior_design
+		replicate_do_db            = senior_design
 
 	4. [Bash] Restart mysqld
 		service mysqld restart
@@ -67,19 +67,38 @@ Master-Slave Connection Creation
 		+----------------------------+----------+--------------+------------------+-------------------+
 	2. On the slave, enter mysql then enter
 		CHANGE MASTER TO MASTER_HOST='seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com', MASTER_USER='[SLAVE NAME]', MASTER_PASSWORD='[SLAVE PWD]', MASTER_LOG_FILE='[MASTER FILE] ', MASTER_LOG_POS= [MASTER POSITION];
-	3. On the slave, enter "start slave;"
-	4. Make sure the slave started - "show slave status \g"
+	3. On the slave, enter "START SLAVE;"
+	4. Make sure the slave started - "SHOW SLAVE STATUS\G;"
 	5. You can always triple check by adding a new row to senior_design in master then see if it updates in slave.
 
-	TROUBLESHOOTING - If for some reason you mess up the slave in step 2.
-			on the slave side
-					reset slave;
-				then repeat step 2 - 5
+	TROUBLESHOOTING 
+	- If for some reason you mess up the slave in step 2.
+		[mysql] on the slave side
+			reset slave;
+		then repeat step 2 - 5
+	- If you are adding a new slave 
+		Halt in master the replication
+			[mysql] master
+				CALL mysql.rds_stop_replication;
+		Add the slave
+		Start the replication when everything is setup master and slave side.
+			[mysql] master
+				CALL mysql.rds_start_replication;
+	- If in SHOW SLAVE STATUS\G shows error
+		try 
+			STOP SLAVE;
+			SET GLOBAL SQL_SLAVE_SKIP_COUNTER = 1;
+			START SLAVE;
+		error should be gone, but this will only skip the error; the error may still re-appear
 
+use senior_design;
+select count(*) from property;
 
 
 Slave user pass:
 Slave 1 - username: slave1 pass: slave1pwd
 Slave 2 - username: slave2 pass: [slave2]
 
-CHANGE MASTER TO MASTER_HOST='seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com', MASTER_USER='slave2', MASTER_PASSWORD='[slave2]', MASTER_LOG_FILE='mysql-bin-changelog.010945', MASTER_LOG_POS= 400;
+CHANGE MASTER TO MASTER_HOST='seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com', MASTER_USER='slave1', MASTER_PASSWORD='slave1pwd', MASTER_LOG_FILE='mysql-bin-changelog.011030', MASTER_LOG_POS= 400;
+
+CHANGE MASTER TO MASTER_HOST='seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com', MASTER_USER='slave2', MASTER_PASSWORD='[slave2]', MASTER_LOG_FILE='mysql-bin-changelog.011030', MASTER_LOG_POS= 400;
