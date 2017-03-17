@@ -76,14 +76,6 @@ Master-Slave Connection Creation
 		[mysql] on the slave side
 			reset slave;
 		then repeat step 2 - 5
-	- If you are adding a new slave 
-		Halt in master the replication
-			[mysql] master
-				CALL mysql.rds_stop_replication;
-		Add the slave
-		Start the replication when everything is setup master and slave side.
-			[mysql] master
-				CALL mysql.rds_start_replication;
 	- If in SHOW SLAVE STATUS\G shows error
 		try 
 			STOP SLAVE;
