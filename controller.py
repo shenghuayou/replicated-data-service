@@ -47,6 +47,8 @@ def ping_servers(servers, connect_status):
 running = 1 #set running to zero to close the server
 server_list = []
 already_connected = []
+turn = 0
+
 print('Controller is up and awaiting connections! \n')
 while running:
   inputready,outputready,exceptready = select.select(input,[],[])
@@ -72,18 +74,36 @@ while running:
                 return_statement = 'All servers are down, unable to process request.'
                 client_to_controller.send(return_statement.encode('utf-8'))
             else:
-                turn = randint(0,len(server_list)-1) # determine which server to direct to
-                if already_connected[turn] == False: # reconnect 
+              #request are equally dustributed to servers
+                if turn < len(already_connected):
                     print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
                     result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
                     already_connected[turn] = True
-                else: # already connected
+                    turn = turn + 1
+                else:
+                    turn = 0
                     print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                    controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
+                    result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
-                    already_connected[:] = [False] * len(already_connected) # reset to false
                     already_connected[turn] = True
+                    turn = turn + 1
+
+                #requests are randomly distributed to servers
+                # turn = randint(0,len(server_list)-1) # determine which server to direct to
+                # if already_connected[turn] == False: # reconnect 
+                #     print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                #     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
+                #     result = controller_to_server.connect_ex((host, int(server_list[turn])))
+                #     foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
+                #     already_connected[turn] = True
+                # else: # already connected
+                #     print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                #     foward_to_server(data_from_client, client_to_controller, controller_to_server, result)
+                #     already_connected[:] = [False] * len(already_connected) # reset to false
+                #     already_connected[turn] = True
 
       else: #if recv() returned NULL, that usually means the sender wants to close the socket.
         print('Action complete - closing connection %s with server.' % (str(address)))
