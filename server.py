@@ -31,6 +31,7 @@ def addmoney(username,password,amount):
     money = result + amount
     print ('money:%s' % money)
     cursor.execute("update property set money=%s where username=%s and password=%s;",(money,username,password))
+    cursor.execute("insert into transaction (username,history) values (%s,'add money %s');",(username,amount))
     db.commit()
     db.close()
 
@@ -54,6 +55,14 @@ def login(username,password):
     else:
         return 1
 
+def history(username):
+    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    cursor = db.cursor()
+    cursor.execute("select * from transaction where username=%s;",(username))
+    db.close()
+    result = cursor.fetchall()
+    return (result)
+
 #decode message from client, take data and socket(s) as parameter
 def decode_message(data,s):
     #split username, password and message for database query
@@ -73,6 +82,9 @@ def decode_message(data,s):
         addmoney(username,password,int(amount_money))
         response_message = "you added money"
         s.send(str(response_message).encode('utf-8'))
+      elif 'history' in message:
+        result = history(username)
+        s.send(str(result).encode('utf-8'))
       else:
         response_message = "invalid message"
         s.send(str(response_message).encode('utf-8'))
