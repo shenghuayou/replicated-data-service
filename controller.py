@@ -9,7 +9,8 @@ import glob
 import time
 import configparser
 import threading
-from random import randint
+import mapreduce as mr
+#from random import randint
 
 
 host = 'localhost' # what address is the server listening on
@@ -69,6 +70,11 @@ def updateIndexes():
     config = configparser.ConfigParser()
     config.read('info.ini') # open the file
 
+    serverOrder = config.get('SERVER','serverOrder')
+    if serverOrder == '':
+        print('Empty serverOrder')
+    if serverOrder != '':
+        print(serverOrder)
     ci = config.get('INDEX', 'csvIndex') # get the current value
     ci = int(ci) + 1
     config.set('INDEX','csvIndex', str(ci)) # set the update value
@@ -80,6 +86,42 @@ def updateIndexes():
     with open('info.ini', 'w') as configfile:
         config.write(configfile) # save the updated value(s)
     threading.Timer(60, updateIndexes).start() # start every 60 seconds
+
+def mapper1(line):
+    yield (line, 1)
+
+def reducer1(line):
+    return (line[0][0], int(line[0][2]) - int(line[0][1]))
+
+def mapper2(line):
+    yield line
+
+def reducer2(line):
+    key = line[0]
+    D = sum(line[1])
+    theta = len(line[1])/60
+    m =  1/D + theta
+    return (key, m)
+
+def mapReduceThread():
+    config = configparser.ConfigParser()
+    config.read('info.ini') # open the file
+    mpi = config.get('INDEX', 'mapreduceIndex')
+    if int(mpi) > 1:
+        targetCSV = 'data/' + mpi + '.csv'
+        try:
+            with open(targetCSV, 'r') as fi:
+                reader = csv.reader(fi)
+                output = mr.run(mr.run(reader, mapper1, reducer1), mapper2, reducer2)
+            query = []
+            for items in (sorted(output, key=lambda x: x[1])):
+                query.append(str(items[0]))
+            config.set('SERVER', 'serverOrder', str(query))
+            with open('info.ini', 'w') as configfile:
+                config.write(configfile)
+        except OSError:
+            pass
+    threading.Timer(60, mapReduceThread).start() # start every 60 seconds
 
 # Create the data folder
 try:
@@ -100,6 +142,7 @@ info_file.close()
 config = configparser.ConfigParser()
 config.read('info.ini')
 config.add_section('SERVER')
+config.set('SERVER', 'serverOrder', '') # default = ''
 config.add_section('INDEX')
 # mapreduceIndex has to be one less than csvIndex as we want to make sure
 # we dont skip any .csv files as we increment them in the same function
@@ -110,6 +153,7 @@ with open('info.ini', 'w') as configfile:
 
 # function calls for threading, this will run along side the main code
 updateIndexes() # update csvIndex and mapreduceIndex in info.ini
+mapReduceThread() # thread for map reduce
 
 running = 1 #set running to zero to close the server
 server_list = []

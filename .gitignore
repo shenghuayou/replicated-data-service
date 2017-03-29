@@ -2,3 +2,5 @@ senior_design_victor.pem
 SeniorServer.pem
 data
 info.ini
+__pycache__
+mp.py
