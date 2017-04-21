@@ -5,6 +5,7 @@ import socket
 import sys
 import pymysql
 
+
 def checkmoney(username, password):
     #connect to database and perform query
     
@@ -121,7 +122,7 @@ host = 'localhost' # what address is the server listening on
 port = 9997 # what port the server accepts connections on
 backlog = 5  # how many connections to accept
 BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
-
+query_list = []
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host,port))
 server.listen(backlog)
@@ -148,8 +149,12 @@ if connection_result == 0:
           # select has indicated that these sockets have data available to recv
           data = s.recv(BUFFER_SIZE)
           if data:
-            print(data)
+            query_list.append(str(data))
+            print (query_list)
             decode_message(data,s)
+            query_list.remove(query_list[0])
+            print (query_list)
+
           else: # close the socket (connection)
             print('Action complete - closing connection %s with controller.' % (str(address)))
             s.close()
