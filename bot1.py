@@ -12,7 +12,7 @@ s.connect((TCP_IP, TCP_PORT))
 print('Client is up and connected to controller. \n')
 
 while 1: #change to while 1 to loop forever
-    MESSAGE = 'client1' + '0x757365726e616d65:' + '123' + '0x70617373776f7264:' + 'checkmoney'
+    MESSAGE = 'client2' + '0x757365726e616d65:' + '123' + '0x70617373776f7264:' + 'checkmoney'
     s.send(MESSAGE.encode('utf-8'))
     data = s.recv(BUFFER_SIZE)
     if data:
