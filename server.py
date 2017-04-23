@@ -4,10 +4,11 @@ import select
 import socket
 import sys
 import pymysql
+import threading
 
 def checkmoney(username, password):
     #connect to database and perform query
-    
+
     #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
     db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
@@ -18,7 +19,7 @@ def checkmoney(username, password):
         return 'invalid username or password'
     else:
         result = cursor.fetchall()
-        print ('result:%s' % result)
+        #print ('result: %s' % str(result))
         return (result[0])
 
 def addmoney(username,password,amount):
@@ -29,7 +30,7 @@ def addmoney(username,password,amount):
     result = cursor.fetchall()
     result = int(result[0][0])
     money = result + amount
-    print ('money:%s' % money)
+    #print ('money:%s' % str(money))
     cursor.execute("update property set money=%s where username=%s and password=%s;",(money,username,password))
     cursor.execute("insert into transaction (username,history) values (%s,'add money %s');",(username,amount))
     db.commit()
@@ -42,7 +43,7 @@ def register(username,password,amount):
     cursor.execute("insert into property (username,password,money) values (%s,%s,%s);",(username,password,amount))
     db.commit()
     db.close()
-    
+
 #check username and password
 def login(username,password):
     #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
@@ -64,7 +65,7 @@ def history(username):
     return (result)
 
 #decode message from client, take data and socket(s) as parameter
-def decode_message(data,s):
+def decode_message(data,s,req_queue):
     #split username, password and message for database query
     if '0x757365726e616d65:' in str(data) and '0x70617373776f7264:' in str(data):
       data_decode = data.decode("utf-8")
@@ -73,6 +74,7 @@ def decode_message(data,s):
       password = str(other_data).split('0x70617373776f7264:')[0]
       message = str(other_data).split('0x70617373776f7264:')[1]
 
+      req_queue.append('1')
       #user functions
       if message=='checkmoney':
         result = checkmoney(username,password)
@@ -111,16 +113,30 @@ def decode_message(data,s):
       s.send(login_result.encode('utf-8'))
 
     else:
-      print ('%s received from %s'%(message,s.getsockname()))
+      #print ('%s received from %s'%(message,s.getsockname()))
       return_statement = 'Successful foward from controller .'
       s.send(return_statement.encode('utf-8'))
-
 
 
 host = 'localhost' # what address is the server listening on
 port = 9997 # what port the server accepts connections on
 backlog = 5  # how many connections to accept
 BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
+
+request_queue = []
+
+def informQueue():
+    server_to_controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    connection_result = server_to_controller.connect_ex((host, 9996))
+    if connection_result == 0:
+        if len(request_queue) > 0:
+            updateQueueLength = str('0x71756575654c656e677468:')+str(port)+':'+str(len(request_queue))
+            server_to_controller.send(updateQueueLength.encode('utf-8'))
+            del request_queue[:]
+    threading.Timer(30, informQueue).start() # start every 60 seconds
+
+# function calls for threading, this will run along side the main code
+informQueue() # update csvIndex and mapreduceIndex in info.ini
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host,port))
@@ -143,15 +159,15 @@ if connection_result == 0:
         if s == server: #if select returns our server socket, there is a new remote socket trying to connect
           client, address = server.accept()
           input.append(client) #add it to the socket list so we can check it now
-          print ('New connection with server added - id is %s'%str(address))
+          #print ('New connection with server added - id is %s'%str(address))
         else:
           # select has indicated that these sockets have data available to recv
           data = s.recv(BUFFER_SIZE)
           if data:
-            print(data)
-            decode_message(data,s)
+            #print(data)
+            decode_message(data,s,request_queue)
           else: # close the socket (connection)
-            print('Action complete - closing connection %s with controller.' % (str(address)))
+            #print('Action complete - closing connection %s with controller.' % (str(address)))
             s.close()
             input.remove(s)
 else:

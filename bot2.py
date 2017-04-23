@@ -11,14 +11,12 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, TCP_PORT))
 print('Client is up and connected to controller. \n')
 
-i = 0
-while i < 20: #change to while 1 to loop forever
-    MESSAGE = str(randint(0,100))
+while 1: #change to while 1 to loop forever
+    MESSAGE = 'client2' + '0x757365726e616d65:' + '123' + '0x70617373776f7264:' + 'checkmoney'
     s.send(MESSAGE.encode('utf-8'))
     data = s.recv(BUFFER_SIZE)
     if data:
         print('Response from the controller %s' % data)
     pass
-    i += 1 
 
 s.close()

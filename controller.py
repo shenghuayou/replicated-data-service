@@ -71,8 +71,6 @@ def updateIndexes():
     config.read('info.ini') # open the file
 
     serverOrder = config.get('SERVER','serverOrder')
-    if serverOrder == '':
-        print('Empty serverOrder')
     if serverOrder != '':
         print(serverOrder)
     ci = config.get('INDEX', 'csvIndex') # get the current value
@@ -108,14 +106,24 @@ def mapReduceThread():
     config.read('info.ini') # open the file
     mpi = config.get('INDEX', 'mapreduceIndex')
     if int(mpi) > 1:
+        #print('Starting mapreduce on data/%s.csv...' % (mpi))
         targetCSV = 'data/' + mpi + '.csv'
         try:
             with open(targetCSV, 'r') as fi:
                 reader = csv.reader(fi)
                 output = mr.run(mr.run(reader, mapper1, reducer1), mapper2, reducer2)
             query = []
-            for items in (sorted(output, key=lambda x: x[1])):
-                query.append(str(items[0]))
+            completed = []
+            for items in output:
+                portID = items[0]
+                findInt = config.get('SERVER', str(portID)) # get the current value
+                integer = items[1]
+                integer = float(integer)*float(findInt)
+                completed.append((portID, integer))
+            for items in (sorted(completed, key=lambda x: x[1])):
+                portID = items[0]
+                integer = items[1]
+                query.append(str(portID))
             config.set('SERVER', 'serverOrder', str(query))
             with open('info.ini', 'w') as configfile:
                 config.write(configfile)
@@ -168,7 +176,7 @@ while running:
     if client_to_controller == controller: #if select returns our server socket, there is a new remote socket trying to connect
       client, address = controller.accept()
       input.append(client) #add it to the socket list so we can check it now
-      print ('New connection with controller added - information is %s' % (str(address)))
+      #print ('New connection with controller added - information is %s' % (str(address)))
     else:
       # select has indicated that these sockets have data available to recv
       data_from_client = client_to_controller.recv(BUFFER_SIZE) # Between client and controller - foward response to server
@@ -180,6 +188,16 @@ while running:
             server_list.append(int(server_port))
             already_connected.append(False)
             print("Server list => %s " % (server_list))
+        if '0x71756575654c656e677468:'  in str(data_from_client):
+            queue_server_port = str(data_from_client).split(':')[1]
+            queue_length = str(data_from_client).split(':')[2]
+            queue_length = queue_length[:-1]
+            #print('updating from server %s with queue length %s' % (queue_server_port, queue_length))
+            config = configparser.ConfigParser()
+            config.read('info.ini')
+            config.set('SERVER', queue_server_port, queue_length)
+            with open('info.ini', 'w') as configfile:
+                config.write(configfile)
         else:
             if len(server_list) <= 0:
                 return_statement = 'All servers are down, unable to process request.'
@@ -187,7 +205,7 @@ while running:
             else:
               #request are equally dustributed to servers
                 if turn < len(already_connected):
-                    print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                    #print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
                     result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result, str(server_list[turn]))
@@ -195,7 +213,7 @@ while running:
                     turn = turn + 1
                 else:
                     turn = 0
-                    print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                    #print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
                     result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result, str(server_list[turn]))
@@ -217,7 +235,7 @@ while running:
                 #     already_connected[turn] = True
 
       else: #if recv() returned NULL, that usually means the sender wants to close the socket.
-        print('Action complete - closing connection %s with server.' % (str(address)))
+        #print('Action complete - closing connection %s with server.' % (str(address)))
         ping_servers(server_list,already_connected) # ping all connected ports, remove any disconnected servers
         client_to_controller.close()
         input.remove(client_to_controller)
