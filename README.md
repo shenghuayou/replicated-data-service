@@ -1,11 +1,21 @@
 # replicated-data-service #
-## Setup MySQL Replication ## 
+
+## Usage ##
+```
+To run server.py
+python server.py [port-id]
+
+To run the bot.py
+python bot.py [client-id]
+```
+
+## Setup MySQL Replication ##
 #### Master (AWS RDS)
   1. Create new slave
 ```mysql
-CREATE USER '[SLAVE USERNAME]'@'%' IDENTIFIED BY '[SLAVE PASSWORD]'; 
+CREATE USER '[SLAVE USERNAME]'@'%' IDENTIFIED BY '[SLAVE PASSWORD]';
 ```
-  2. Give it access 
+  2. Give it access
 ```mysql
 GRANT REPLICATION SLAVE ON *.* TO '[SLAVE USERNAME]'@'%';  
 ```
@@ -14,7 +24,7 @@ GRANT REPLICATION SLAVE ON *.* TO '[SLAVE USERNAME]'@'%';
 ```bash
 mysqldump -h [SERVER IP] -u root -p [DB NAME] > dump.sql
 ```
-  2. [Bash] Import the dump.sql into your database 
+  2. [Bash] Import the dump.sql into your database
 ```bash
 mysql [DB NAME] < dump.sql
 ```
@@ -22,10 +32,10 @@ mysql [DB NAME] < dump.sql
 ```
 #Give the server a unique ID
 server-id               = [CHANGE THIS TO NUMBER]
-		
+
 #Ensure there's a relay log
 relay-log               = /var/lib/mysql/mysql-relay-bin.log
-		
+
 #Keep the binary log on
 log_bin                 = /var/lib/mysql/mysql-bin.log
 replicate_do_db            = [DB NAME]
@@ -52,13 +62,13 @@ CHANGE MASTER TO MASTER_HOST=[MASTER IP], MASTER_USER='[SLAVE NAME]', MASTER_PAS
 ```mysql
 START SLAVE;
 ```
-  4. Make sure the slave started 
+  4. Make sure the slave started
 ```myaql
 SHOW SLAVE STATUS\G;
 ```
   5. You can always triple check by adding a new row to database in master then see if it updates in slave.
-  
-#### Troubleshooting 
+
+#### Troubleshooting
 - If for some reason you mess up the slave in step 2.
 	[mysql] on the slave side
 ```mysql

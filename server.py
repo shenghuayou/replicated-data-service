@@ -118,61 +118,64 @@ def decode_message(data,s,req_queue):
       s.send(return_statement.encode('utf-8'))
 
 
-host = 'localhost' # what address is the server listening on
-port = 9997 # what port the server accepts connections on
-backlog = 5  # how many connections to accept
-BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
-
-request_queue = []
-
-def informQueue():
-    server_to_controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connection_result = server_to_controller.connect_ex((host, 9996))
-    if connection_result == 0:
-        if len(request_queue) > 0:
-            updateQueueLength = str('0x71756575654c656e677468:')+str(port)+':'+str(len(request_queue))
-            server_to_controller.send(updateQueueLength.encode('utf-8'))
-            del request_queue[:]
-    threading.Timer(30, informQueue).start() # start every 60 seconds
-
-# function calls for threading, this will run along side the main code
-informQueue() # update csvIndex and mapreduceIndex in info.ini
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((host,port))
-server.listen(backlog)
-input = [server,] #a list of all connections we want to check for data
-                  #each time we call select.select()
-
-running = 1 #set running to zero to close the server
-print('Server with port:%s is up and connecting to the controller! \n' % port)
-controller_port = 9996
-server_to_controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-connection_result = server_to_controller.connect_ex((host, controller_port))
-if connection_result == 0:
-    print('Successful connection to the controller')
-    identify_as_server = str('0x4920616d206120736572766572:')+str(port)
-    server_to_controller.send(identify_as_server.encode('utf-8')) # foward string to identify as server to the controller
-    while running:
-      inputready,outputready,exceptready = select.select(input,[],[])
-      for s in inputready: #check each socket that select() said has available data
-        if s == server: #if select returns our server socket, there is a new remote socket trying to connect
-          client, address = server.accept()
-          input.append(client) #add it to the socket list so we can check it now
-          #print ('New connection with server added - id is %s'%str(address))
-        else:
-          # select has indicated that these sockets have data available to recv
-          data = s.recv(BUFFER_SIZE)
-          if data:
-            #print(data)
-            decode_message(data,s,request_queue)
-          else: # close the socket (connection)
-            #print('Action complete - closing connection %s with controller.' % (str(address)))
-            s.close()
-            input.remove(s)
+if len(sys.argv) > 2 or len(sys.argv) <= 1:
+    print('Usage: python server.py [port-number]')
 else:
-    print('Failed to connect to the controller')
-    server.close()
+    host = 'localhost' # what address is the server listening on
+    port = int(sys.argv[1]) # what port the server accepts connections on
+    backlog = 5  # how many connections to accept
+    BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
 
-#if running is ever set to zero, we will call this
-server.close()
+    request_queue = []
+
+    def informQueue():
+        server_to_controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connection_result = server_to_controller.connect_ex((host, 9996))
+        if connection_result == 0:
+            if len(request_queue) > 0:
+                updateQueueLength = str('0x71756575654c656e677468:')+str(port)+':'+str(len(request_queue))
+                server_to_controller.send(updateQueueLength.encode('utf-8'))
+                del request_queue[:]
+        threading.Timer(30, informQueue).start() # start every 60 seconds
+
+    # function calls for threading, this will run along side the main code
+    informQueue() # update csvIndex and mapreduceIndex in info.ini
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((host,port))
+    server.listen(backlog)
+    input = [server,] #a list of all connections we want to check for data
+                      #each time we call select.select()
+
+    running = 1 #set running to zero to close the server
+    print('Server with port:%s is up and connecting to the controller! \n' % port)
+    controller_port = 9996
+    server_to_controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    connection_result = server_to_controller.connect_ex((host, controller_port))
+    if connection_result == 0:
+        print('Successful connection to the controller')
+        identify_as_server = str('0x4920616d206120736572766572:')+str(port)
+        server_to_controller.send(identify_as_server.encode('utf-8')) # foward string to identify as server to the controller
+        while running:
+          inputready,outputready,exceptready = select.select(input,[],[])
+          for s in inputready: #check each socket that select() said has available data
+            if s == server: #if select returns our server socket, there is a new remote socket trying to connect
+              client, address = server.accept()
+              input.append(client) #add it to the socket list so we can check it now
+              #print ('New connection with server added - id is %s'%str(address))
+            else:
+              # select has indicated that these sockets have data available to recv
+              data = s.recv(BUFFER_SIZE)
+              if data:
+                #print(data)
+                decode_message(data,s,request_queue)
+              else: # close the socket (connection)
+                #print('Action complete - closing connection %s with controller.' % (str(address)))
+                s.close()
+                input.remove(s)
+    else:
+        print('Failed to connect to the controller')
+        server.close()
+
+    #if running is ever set to zero, we will call this
+    server.close()

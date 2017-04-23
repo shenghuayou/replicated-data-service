@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import select
 import socket
 import sys
@@ -10,6 +9,7 @@ import time
 import configparser
 import threading
 import mapreduce as mr
+import json
 #from random import randint
 
 
@@ -57,11 +57,11 @@ def foward_to_server(data_from_client, client_to_controller, controller_to_serve
 def ping_servers(servers, connect_status):
   for server in servers:
     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
-    result = controller_to_server.connect_ex((host, server))
+    result = controller_to_server.connect_ex((host, int(server)))
     if result == 0:
       pass # keep port in server list (server is connected)
     else:
-      print('Server %s has disconnected from the controller' % (server))
+      print('Server %s has disconnected from the controller' % str(server))
       index = servers.index(server) # get the index of the disconnected server
       connect_status.pop(index) # remove it from the connect_status list
       servers.remove(server) # remove port from server list (server disconnected)
@@ -112,8 +112,8 @@ def mapReduceThread():
             with open(targetCSV, 'r') as fi:
                 reader = csv.reader(fi)
                 output = mr.run(mr.run(reader, mapper1, reducer1), mapper2, reducer2)
-            query = []
             completed = []
+            query = ''
             for items in output:
                 portID = items[0]
                 findInt = config.get('SERVER', str(portID)) # get the current value
@@ -121,9 +121,8 @@ def mapReduceThread():
                 integer = float(integer)*float(findInt)
                 completed.append((portID, integer))
             for items in (sorted(completed, key=lambda x: x[1])):
-                portID = items[0]
-                integer = items[1]
-                query.append(str(portID))
+                query += str(items[0]) + ','
+            query = query[:-1]
             config.set('SERVER', 'serverOrder', str(query))
             with open('info.ini', 'w') as configfile:
                 config.write(configfile)
@@ -165,8 +164,9 @@ mapReduceThread() # thread for map reduce
 
 running = 1 #set running to zero to close the server
 server_list = []
-already_connected = []
+already_connected = [] # for random
 turn = 0
+firstTime = False
 
 print('Controller is up and awaiting connections! \n')
 while running:
@@ -182,12 +182,25 @@ while running:
       data_from_client = client_to_controller.recv(BUFFER_SIZE) # Between client and controller - foward response to server
       if data_from_client:
         if '0x4920616d206120736572766572:' in str(data_from_client):
-            server_port = str(data_from_client).split(':')[-1]
-            server_port = server_port[:-1] # For some reason on AmazonEC2, we need to remove the [:-1]
-            print('Server identified - the port is %s' % (str(server_port)))
-            server_list.append(int(server_port))
-            already_connected.append(False)
-            print("Server list => %s " % (server_list))
+            config = configparser.ConfigParser()
+            config.read('info.ini')
+            serverOrder = config.get("SERVER", "serverOrder")
+            if serverOrder == '':
+                server_port = str(data_from_client).split(':')[-1]
+                server_port = server_port[:-1] # For some reason on AmazonEC2, we need to remove the [:-1]
+                print('Server identified - the port is %s' % (str(server_port)))
+                server_list.append(server_port)
+                #already_connected.append(False) # for random
+                print("Server list => %s " % (server_list))
+            elif serverOrder != '':
+                server_port = str(data_from_client).split(':')[-1]
+                server_port = server_port[:-1] # For some reason on AmazonEC2, we need to remove the [:-1]
+                print('Server identified - the port is %s' % (str(server_port)))
+                server_list.append(server_port)
+                config.set('SERVER', 'serverOrder', serverOrder+','+server_port) # default = 0
+                with open('info.ini', 'w') as configfile:
+                    config.write(configfile)
+                print("Server list => %s " % (server_list))
         if '0x71756575654c656e677468:'  in str(data_from_client):
             queue_server_port = str(data_from_client).split(':')[1]
             queue_length = str(data_from_client).split(':')[2]
@@ -203,22 +216,30 @@ while running:
                 return_statement = 'All servers are down, unable to process request.'
                 client_to_controller.send(return_statement.encode('utf-8'))
             else:
-              #request are equally dustributed to servers
-                if turn < len(already_connected):
-                    #print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                #print("Server list => %s " % (server_list))
+                config = configparser.ConfigParser()
+                config.read('info.ini')
+                serverOrder = config.get("SERVER", "serverOrder")
+                if serverOrder != '':
+                    #request are equally dustributed to servers in specific order
+                    server_list = serverOrder.split(',')
+                    if turn < len(server_list) - 1:
+                        turn = turn + 1
+                    elif turn == len(server_list) - 1:
+                        turn = 0
+                    print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
                     result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result, str(server_list[turn]))
-                    already_connected[turn] = True
-                    turn = turn + 1
-                else:
-                    turn = 0
-                    #print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
+                if serverOrder == '':
+                    if turn < len(server_list) - 1:
+                        turn = turn + 1
+                    elif turn == len(server_list) - 1:
+                        turn = 0
+                    print('The selected server (port) is %s out of the %s number of avaliable servers' % (str(server_list[turn]), len(server_list)))
                     controller_to_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # This will serve as a ping request
                     result = controller_to_server.connect_ex((host, int(server_list[turn])))
                     foward_to_server(data_from_client, client_to_controller, controller_to_server, result, str(server_list[turn]))
-                    already_connected[turn] = True
-                    turn = turn + 1
 
                 #requests are randomly distributed to servers
                 # turn = randint(0,len(server_list)-1) # determine which server to direct to
