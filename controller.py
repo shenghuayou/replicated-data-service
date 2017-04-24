@@ -198,6 +198,7 @@ while running:
                 print('Server identified - the port is %s' % (str(server_port)))
                 server_list.append(server_port)
                 config.set('SERVER', 'serverOrder', serverOrder+','+server_port) # default = 0
+                config.set('SERVER', server_port, '1')
                 with open('info.ini', 'w') as configfile:
                     config.write(configfile)
                 print("Server list => %s " % (server_list))
