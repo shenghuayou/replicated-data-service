@@ -5,7 +5,7 @@ By default controller is set to port 9996, so don't re-use the port for any serv
 The controller must be up and running first before any servers or clients/bots can connect.
 ```
 To run controller.py
-python controller
+python controller.py
 
 To run server.py
 python server.py [port-id]
