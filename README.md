@@ -14,7 +14,7 @@ To run the bot.py
 python bot.py [client-id] [function]
 ```
 ## Screen Command ##
-The screen program allows you to use multiple windows in Unix. In other words the screen command lets you detach from a terminal session and then attach it back at a later time.
+The screen program allows you to use multiple windows in Unix. In other words the screen command lets you detach from a terminal session and then attach it back at a later time. (use command "screen" to keep running server codes and controller codes on AWS)
 ```
 screen  #create a new screen session
 screen -ls  #check running screens
