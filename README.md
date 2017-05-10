@@ -11,7 +11,15 @@ To run server.py
 python server.py [port-id]
 
 To run the bot.py
-python bot.py [client-id]
+python bot.py [client-id] [function]
+```
+## Screen Command ##
+The screen program allows you to use multiple windows in Unix. In other words the screen command lets you detach from a terminal session and then attach it back at a later time.
+```
+screen  #create a new screen session
+screen -ls  #check running screens
+screen -r screenID   #resume to a screen
+screen -X -S screenID kill   #end a screen
 ```
 
 ## Setup MySQL Replication ##
