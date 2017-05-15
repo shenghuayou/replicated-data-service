@@ -3,7 +3,8 @@ import socket
 import sys
 from random import randint
 
-TCP_IP = 'localhost'
+#TCP_IP = 'localhost'
+TCP_IP = '52.34.59.51'
 TCP_PORT = 9996
 BUFFER_SIZE = 1024
 

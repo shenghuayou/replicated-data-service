@@ -121,7 +121,9 @@ def decode_message(data,s,req_queue):
 if len(sys.argv) > 2 or len(sys.argv) <= 1:
     print('Usage: python server.py [port-number]')
 else:
-    host = 'localhost' # what address is the server listening on
+    #host = 'localhost' # what address is the server listening on
+    host = '52.34.59.51'
+    server_host = '0.0.0.0'
     port = int(sys.argv[1]) # what port the server accepts connections on
     backlog = 5  # how many connections to accept
     BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
@@ -142,7 +144,7 @@ else:
     informQueue() # update csvIndex and mapreduceIndex in info.ini
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((host,port))
+    server.bind((server_host,port))
     server.listen(backlog)
     input = [server,] #a list of all connections we want to check for data
                       #each time we call select.select()

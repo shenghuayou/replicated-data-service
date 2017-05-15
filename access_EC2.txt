@@ -9,6 +9,9 @@ password for root:qwe123456
 
 server2: ssh -i "senior_design_victor.pem" ec2-user@ec2-54-69-160-179.us-west-2.compute.amazonaws.com
 
+controller: ssh -i "zheng.pem" ec2-user@ec2-52-34-59-51.us-west-2.compute.amazonaws.com
+
+
 DB: mysql -h seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com -P 3306 -u root -p
 username: root
 password: qwe123456

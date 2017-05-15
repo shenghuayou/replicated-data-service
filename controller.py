@@ -62,8 +62,8 @@ def ping_servers(servers, connect_status):
       pass # keep port in server list (server is connected)
     else:
       print('Server %s has disconnected from the controller' % str(server))
-      index = servers.index(server) # get the index of the disconnected server
-      connect_status.pop(index) # remove it from the connect_status list
+      #index = servers.index(server) # get the index of the disconnected server
+      #connect_status.pop(index) # remove it from the connect_status list
       servers.remove(server) # remove port from server list (server disconnected)
 
 def updateIndexes():
