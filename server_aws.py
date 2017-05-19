@@ -9,8 +9,8 @@ import threading
 def checkmoney(username, password):
     #connect to database and perform query
 
-    #db = pymysql.connect(host="54.149.37.172",port=3306,user="root",passwd="qwe123456",db="slave" )
-    db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
+    db = pymysql.connect(host="127.0.0.1",port=3306,user="root",passwd="qwe123456",db="senior_design",unix_socket="/var/lib/mysql/mysql.sock")
+    #db = pymysql.connect("seniordesign.c9btkcvedeon.us-west-2.rds.amazonaws.com","root","qwe123456","senior_design" )
     cursor = db.cursor()
     cursor.execute("select username,money from property where username=%s and password=%s;",(username,password))
     db.close()
@@ -121,7 +121,9 @@ def decode_message(data,s,req_queue):
 if len(sys.argv) > 2 or len(sys.argv) <= 1:
     print('Usage: python server.py [port-number]')
 else:
-    host = 'localhost' # what address is the server listening on
+    #host = 'localhost' # what address is the server listening on
+    host = '52.34.59.51'
+    server_host = '0.0.0.0'
     port = int(sys.argv[1]) # what port the server accepts connections on
     backlog = 5  # how many connections to accept
     BUFFER_SIZE = 1024 # Max receive buffer size, in bytes, per recv() call
@@ -142,7 +144,7 @@ else:
     informQueue() # update csvIndex and mapreduceIndex in info.ini
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((host,port))
+    server.bind((server_host,port))
     server.listen(backlog)
     input = [server,] #a list of all connections we want to check for data
                       #each time we call select.select()
@@ -167,7 +169,7 @@ else:
               # select has indicated that these sockets have data available to recv
               data = s.recv(BUFFER_SIZE)
               if data:
-                #print(data)
+                print("Recieved from the controller: %s"  % str(data))
                 decode_message(data,s,request_queue)
               else: # close the socket (connection)
                 #print('Action complete - closing connection %s with controller.' % (str(address)))
