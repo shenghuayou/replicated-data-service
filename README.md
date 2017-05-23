@@ -1,4 +1,10 @@
 # replicated-data-service #
+Our replicated data service focus on optimizing the efficiency of the servers to process client requests in the quickest and most organized way possible.Our project simulates bank transactions between a client and the bank allowing clients to withdraw, deposit and check on their balance with the minimum latency delay possible.
+
+## Group Members ##
+* [Shenghua You](https://github.com/shenghuayou), shenghuayou@gmail.com
+* [Victor Fung](https://github.com/VictorFung1), victor.fung122@gmail.com
+* [Zhenxian Huang](https://github.com/zhengxianh), 619913512hzx@gmail.com 
 
 ## Usage ##
 By default controller is set to port 9996, so don't re-use the port for any servers
@@ -11,7 +17,7 @@ To run server.py
 python server.py [port-id]
 
 To run the bot.py
-python bot.py [client-id] [function]
+python bot.py [client-id]
 ```
 ## Screen Command ##
 The screen program allows you to use multiple windows in Unix. In other words the screen command lets you detach from a terminal session and then attach it back at a later time. (use command "screen" to keep running server codes and controller codes on AWS)
